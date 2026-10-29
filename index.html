@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Prospects · entreprises sans site</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Prospects</h1>
+      <p>Entreprises locales sans site internet, d'après OpenStreetMap.</p>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="ghost" data-open="rules">⚖️ Règles d'envoi</button>
+      <button type="button" class="ghost" data-open="settings">⚙️ Mes infos</button>
+    </div>
+  </header>
+
+  <form id="search" class="panel" autocomplete="off">
+    <div class="row">
+      <label class="field grow">
+        <span>Ville</span>
+        <input id="town" type="text" placeholder="Ex. : Angers" required />
+        <ul id="town-list" class="suggestions" role="listbox" hidden></ul>
+      </label>
+      <label class="field">
+        <span>Rayon</span>
+        <select id="radius">
+          <option value="1000">1 km</option>
+          <option value="2000">2 km</option>
+          <option value="3000" selected>3 km</option>
+          <option value="5000">5 km</option>
+          <option value="8000">8 km</option>
+        </select>
+      </label>
+      <button type="submit" class="primary" id="search-btn">Chercher</button>
+    </div>
+    <fieldset class="sectors">
+      <legend>Secteurs</legend>
+      <div id="sector-chips" class="chips"></div>
+    </fieldset>
+    <p class="hint">Grandes villes : commencez par 1 à 3 km. Une recherche peut prendre jusqu'à une minute.</p>
+  </form>
+
+  <section id="results" hidden>
+    <div class="summary" id="summary"></div>
+    <p class="warning">⚠️ « Pas de site dans OpenStreetMap » ne veut pas dire « pas de site ». Cliquez sur <strong>Vérifier</strong> avant d'écrire.</p>
+    <div class="toolbar">
+      <div id="tabs" class="tabs" role="tablist"></div>
+      <div class="filters">
+        <label><input type="checkbox" id="only-email" /> Avec e-mail</label>
+        <label><input type="checkbox" id="only-reachable" checked /> Joignables seulement</label>
+        <label><input type="checkbox" id="hide-done" /> Masquer les traités</label>
+        <label><input type="checkbox" id="show-chains" /> Inclure les chaînes</label>
+        <input type="search" id="text-filter" placeholder="Filtrer par nom, type, rue…" />
+        <button type="button" class="ghost" id="export">⬇️ Export CSV</button>
+      </div>
+    </div>
+    <div id="list" class="list"></div>
+    <button type="button" class="ghost more" id="more" hidden>Voir plus</button>
+  </section>
+
+  <p id="status" class="status" role="status"></p>
+
+  <footer class="foot">
+    Données © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a> (licence ODbL) ·
+    Communes : <a href="https://geo.api.gouv.fr" target="_blank" rel="noopener">geo.api.gouv.fr</a> ·
+    Vos statuts, notes et réglages restent dans ce navigateur.
+  </footer>
+
+  <!-- Email composer -->
+  <dialog id="composer" class="modal">
+    <form method="dialog" class="modal-inner">
+      <header><h2 id="composer-title">Écrire</h2><button class="x" value="cancel" aria-label="Fermer">✕</button></header>
+      <p class="hint" id="composer-to"></p>
+      <label class="field"><span>Objet</span><input id="mail-subject" type="text" /></label>
+      <label class="field"><span>Message</span><textarea id="mail-body" rows="16"></textarea></label>
+      <p class="hint">Personnalisez une phrase avant d'envoyer : un message qui montre que vous connaissez l'entreprise est lu, les autres non.</p>
+      <div class="modal-actions">
+        <button type="button" class="ghost" id="mail-copy">📋 Copier le message</button>
+        <a class="button primary" id="mail-open" href="#">✉️ Ouvrir dans ma messagerie</a>
+        <button type="button" class="ghost" id="mail-done">✔️ Marquer « contacté »</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- My details -->
+  <dialog id="settings" class="modal">
+    <form method="dialog" class="modal-inner" id="settings-form">
+      <header><h2>Mes infos</h2><button class="x" value="cancel" aria-label="Fermer">✕</button></header>
+      <p class="hint">Utilisées pour signer les messages. Gardées dans ce navigateur uniquement.</p>
+      <div class="row">
+        <label class="field grow"><span>Prénom et nom</span><input name="name" type="text" /></label>
+        <label class="field grow"><span>Téléphone (facultatif)</span><input name="phone" type="tel" /></label>
+      </div>
+      <label class="field"><span>Ma page (offre)</span><input name="page" type="url" placeholder="https://…" /></label>
+      <label class="field"><span>Zone où je travaille</span><input name="area" type="text" placeholder="Ex. : autour d'Angers" /></label>
+      <fieldset class="demos">
+        <legend>Site d'exemple à montrer, par secteur</legend>
+        <div id="demo-fields"></div>
+      </fieldset>
+      <div class="modal-actions"><button class="primary" value="save">Enregistrer</button></div>
+    </form>
+  </dialog>
+
+  <!-- Rules -->
+  <dialog id="rules" class="modal">
+    <form method="dialog" class="modal-inner">
+      <header><h2>Avant d'envoyer</h2><button class="x" value="cancel" aria-label="Fermer">✕</button></header>
+      <ol class="rules">
+        <li><strong>Ayez un statut légal d'abord.</strong> Prospecter des clients, c'est de la publicité : sans immatriculation, la loi présume du travail dissimulé (Code du travail, art. L8221-4).</li>
+        <li><strong>Un message par entreprise, écrit pour elle.</strong> Pas d'envoi en masse : c'est du spam, et ça ne marche pas.</li>
+        <li><strong>Seulement des professionnels, pour leur métier.</strong> La CNIL autorise la prospection B2B par e-mail sans accord préalable si le message concerne leur activité.</li>
+        <li><strong>Dites d'où vient l'adresse</strong> (OpenStreetMap) et <strong>comment refuser</strong> (répondre « stop »). Les modèles le font déjà.</li>
+        <li><strong>Respectez les refus.</strong> Marquez « Ne plus contacter » : la fiche reste bloquée ici.</li>
+        <li><strong>Ne gardez pas les données plus de 3 ans</strong> après le dernier échange. Bouton « Tout effacer » en bas des réglages.</li>
+        <li><strong>Adresses Gmail ou Orange au nom d'une personne :</strong> c'est souvent l'adresse perso d'un artisan. Restez sur son activité pro, une seule fois.</li>
+      </ol>
+      <p class="hint">Sources : <a href="https://www.cnil.fr/fr/la-prospection-commerciale-par-courrier-electronique" target="_blank" rel="noopener">CNIL, prospection par e-mail</a> · <a href="https://code.travail.gouv.fr/code-du-travail/l8221-4" target="_blank" rel="noopener">art. L8221-4</a></p>
+      <div class="modal-actions"><button type="button" class="danger" id="wipe">🗑️ Tout effacer (statuts et réglages)</button></div>
+    </form>
+  </dialog>
+
+  <script src="sectors.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
