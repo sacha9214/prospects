@@ -12,43 +12,43 @@ const re = (alts) => new RegExp(`^(${alts})$`);
 
 window.SECTORS = [
   {
-    id: 'restaurants', scan: 'les restaurants et bars', label: 'Restaurants & bars', icon: '🍽️', default: true,
+    id: 'restaurants', place: 'votre établissement', scan: 'les restaurants et bars', label: 'Restaurants & bars', icon: '🍽️', default: true,
     query: ['nwr["amenity"~"^(restaurant|cafe|fast_food|bar|pub|ice_cream|biergarten)$"]["name"]'],
     match: (t) => /^(restaurant|cafe|fast_food|bar|pub|ice_cream|biergarten)$/.test(t.amenity),
     pitch: 'votre carte, vos horaires et l’accès, et à réserver une table',
   },
   {
-    id: 'alimentation', scan: 'les commerces de bouche', label: 'Boulangeries & alimentation', icon: '🥖', default: true,
+    id: 'alimentation', place: 'votre commerce', scan: 'les commerces de bouche', label: 'Boulangeries & alimentation', icon: '🥖', default: true,
     query: [`nwr["shop"~"^(${FOOD_SHOPS})$"]["name"]`],
     match: (t) => re(FOOD_SHOPS).test(t.shop),
     pitch: 'vos produits, vos horaires et l’accès, et à passer commande',
   },
   {
-    id: 'beaute', scan: 'les salons de coiffure et de beauté', label: 'Coiffure & beauté', icon: '💇', default: true,
+    id: 'beaute', place: 'votre salon', scan: 'les salons de coiffure et de beauté', label: 'Coiffure & beauté', icon: '💇', default: true,
     query: [`nwr["shop"~"^(${BEAUTY_SHOPS})$"]["name"]`],
     match: (t) => re(BEAUTY_SHOPS).test(t.shop),
     pitch: 'vos prestations et vos tarifs, et à prendre rendez-vous en ligne',
   },
   {
-    id: 'batiment', scan: 'les artisans', label: 'Artisans du bâtiment', icon: '🛠️', default: true,
+    id: 'batiment', place: 'votre entreprise', scan: 'les artisans', label: 'Artisans du bâtiment', icon: '🛠️', default: true,
     query: [`nwr["craft"~"^(${BUILDING_CRAFTS})$"]["name"]`],
     match: (t) => re(BUILDING_CRAFTS).test(t.craft),
     pitch: 'vos chantiers en photos et votre zone d’intervention, et à vous demander un devis',
   },
   {
-    id: 'auto', scan: 'les garages', label: 'Garages & auto', icon: '🚗', default: true,
+    id: 'auto', place: 'votre garage', scan: 'les garages', label: 'Garages & auto', icon: '🚗', default: true,
     query: [`nwr["shop"~"^(${AUTO_SHOPS})$"]["name"]`, 'nwr["amenity"~"^(car_wash|driving_school)$"]["name"]'],
     match: (t) => re(AUTO_SHOPS).test(t.shop) || /^(car_wash|driving_school)$/.test(t.amenity),
     pitch: 'vos prestations et vos horaires, et à vous demander un devis',
   },
   {
-    id: 'commerces', scan: 'les commerces', label: 'Commerces', icon: '🛍️', default: true,
+    id: 'commerces', place: 'votre boutique', scan: 'les commerces', label: 'Commerces', icon: '🛍️', default: true,
     query: [`nwr["shop"~"^(${RETAIL_SHOPS})$"]["name"]`],
     match: (t) => re(RETAIL_SHOPS).test(t.shop),
     pitch: 'vos produits, vos horaires et l’accès à votre boutique',
   },
   {
-    id: 'services', scan: 'les entreprises', label: 'Services & artisanat', icon: '🧰', default: true,
+    id: 'services', place: 'votre entreprise', scan: 'les entreprises', label: 'Services & artisanat', icon: '🧰', default: true,
     query: [
       `nwr["shop"~"^(${SERVICE_SHOPS})$"]["name"]`,
       'nwr["craft"]["name"]',
@@ -58,7 +58,7 @@ window.SECTORS = [
     pitch: 'vos services et vos coordonnées, et à vous contacter facilement',
   },
   {
-    id: 'sante', scan: 'les professionnels de santé et de bien-être', label: 'Santé & bien-être', icon: '🧘', default: false,
+    id: 'sante', place: 'votre cabinet', scan: 'les professionnels de santé et de bien-être', label: 'Santé & bien-être', icon: '🧘', default: false,
     query: ['nwr["healthcare"]["healthcare"!="pharmacy"]["name"]', 'nwr["leisure"="fitness_centre"]["name"]'],
     match: (t) => (!!t.healthcare && t.healthcare !== 'pharmacy') || t.leisure === 'fitness_centre',
     pitch: 'vos consultations et vos informations pratiques, et à prendre rendez-vous',

@@ -71,22 +71,6 @@
     Vos statuts, notes et réglages restent dans ce navigateur.
   </footer>
 
-  <!-- Email composer -->
-  <dialog id="composer" class="modal">
-    <form method="dialog" class="modal-inner">
-      <header><h2 id="composer-title">Écrire</h2><button class="x" value="cancel" aria-label="Fermer">✕</button></header>
-      <p class="hint" id="composer-to"></p>
-      <label class="field"><span>Objet</span><input id="mail-subject" type="text" /></label>
-      <label class="field"><span>Message</span><textarea id="mail-body" rows="16"></textarea></label>
-      <p class="hint">Personnalisez une phrase avant d'envoyer : un message qui montre que vous connaissez l'entreprise est lu, les autres non.</p>
-      <div class="modal-actions">
-        <button type="button" class="ghost" id="mail-copy">📋 Copier le message</button>
-        <a class="button primary" id="mail-open" href="#">✉️ Ouvrir dans ma messagerie</a>
-        <button type="button" class="ghost" id="mail-done">✔️ Marquer « contacté »</button>
-      </div>
-    </form>
-  </dialog>
-
   <!-- My details -->
   <dialog id="settings" class="modal">
     <form method="dialog" class="modal-inner" id="settings-form">
@@ -125,6 +109,7 @@
   </dialog>
 
   <script src="sectors.js"></script>
+  <script src="drafts.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

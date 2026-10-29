@@ -26,10 +26,7 @@
   const DEFAULT_DEMO = 'https://sacha9214.github.io/artisan-demo/';
 
   const $ = (sel) => document.querySelector(sel);
-  // French prepositions with town names: "de Tours", "d'Angers", "du Mans" / "à Tours", "au Mans".
-  const deTown = (c) => /^Le /.test(c) ? `du ${c.slice(3)}` : /^Les /.test(c) ? `des ${c.slice(4)}` : /^[aeiouyhâéèêîôû]/i.test(c) ? `d'${c}` : `de ${c}`;
-  const aTown = (c) => /^Le /.test(c) ? `au ${c.slice(3)}` : /^Les /.test(c) ? `aux ${c.slice(4)}` : `à ${c}`;
-  const queName = (n) => /^[aeiouyhâéèêîôû]/i.test(n) ? `qu'${n}` : `que ${n}`;
+  const { deTown } = window.Drafts;
   // OSM data is user-contributed: escape everything before it touches innerHTML.
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -287,10 +284,11 @@
         <div class="lead-actions">
           <a class="button" href="${google}" target="_blank" rel="noopener noreferrer">🔎 Vérifier</a>
           <a class="button" href="${esc(l.osm)}" target="_blank" rel="noopener noreferrer">🗺️</a>
-          ${l.emails.length && st !== 'stop' ? '<button type="button" data-action="write">✉️ Écrire</button>' : ''}
+          ${st !== 'stop' && Drafts.kindsFor(l).length ? `<button type="button" data-action="draft" aria-expanded="${drafts.has(l.id)}">✍️ ${drafts.has(l.id) ? 'Fermer' : 'Générer'}</button>` : ''}
         </div>
       </div>
       ${contacts ? `<div class="contacts">${contacts}</div>` : ''}
+      ${drafts.has(l.id) && st !== 'stop' ? draftHtml(l) : ''}
       <input class="note" type="text" data-action="note" placeholder="Note (ex. : rappeler mardi)" value="${esc(mark.note || '')}" />
     </article>`;
   }
@@ -310,68 +308,82 @@
     if (e.target.dataset.action === 'status') { setMark(l.id, { status: e.target.value }); render(); }
     if (e.target.dataset.action === 'note') setMark(l.id, { note: e.target.value });
   });
-  $('#list').addEventListener('click', (e) => {
-    if (e.target.closest('[data-action="write"]')) openComposer(leadOf(e.target));
-  });
+  // ---------- message generator (inline, under each business) ----------
+  // Open drafts survive re-renders, including what you typed in them.
+  const drafts = new Map(); // id -> { kind, variant, subject, body }
 
-  // ---------- composer ----------
-  let current = null;
-  function draft(l) {
-    const sector = SECTORS.find((s) => s.id === l.sector);
-    const demo = settings.demos?.[l.sector];
-    const area = settings.area ? ` ${settings.area}` : '';
-    const lines = [
-      'Bonjour,',
-      '',
-      `Je m'appelle ${settings.name || '[votre nom]'}, je crée des sites internet pour les entreprises locales${area}. En parcourant ${sector.scan} ${deTown(l.city)}, j'ai vu ${queName(l.name)} n'avait pas encore de site.`,
-      '',
-      `Un site simple aide vos clients à découvrir ${sector.pitch}.`,
-    ];
-    if (l.facebook || l.instagram) {
-      lines.push(`Vous êtes déjà sur ${l.facebook ? 'Facebook' : 'Instagram'} : un site vient en complément, et il vous rend plus facile à trouver sur Google quand quelqu'un cherche votre métier ${aTown(l.city)}.`);
+  function freshDraft(l, kind, variant) {
+    const { subject, body } = Drafts.generate(l, kind, variant, settings, SECTORS, DEFAULT_DEMO);
+    return { kind, variant, subject, body };
+  }
+
+  function draftHtml(l) {
+    const d = drafts.get(l.id);
+    const kinds = Drafts.kindsFor(l);
+    const social = l.facebook || l.instagram;
+    const rows = Math.min(18, d.body.split('\n').length + 2);
+    const mailto = d.kind === 'email' ? `mailto:${l.emails[0]}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(d.body)}` : '';
+    return `<div class="draft">
+      <div class="draft-tabs" role="tablist">${Drafts.KINDS.filter(([k]) => kinds.includes(k)).map(([k, label]) =>
+        `<button type="button" role="tab" data-action="kind" data-kind="${k}" aria-selected="${k === d.kind}">${label}</button>`).join('')}</div>
+      ${d.kind === 'email' ? `
+        <div class="draft-row"><span>À</span><code>${esc(l.emails[0])}</code><button type="button" data-copy="to">📋 Copier</button></div>
+        <div class="draft-row"><span>Objet</span><input type="text" data-draft="subject" value="${esc(d.subject)}" /><button type="button" data-copy="subject">📋 Copier</button></div>` : ''}
+      <textarea data-draft="body" rows="${rows}" aria-label="Message">${esc(d.body)}</textarea>
+      <div class="draft-actions">
+        <button type="button" class="primary" data-copy="body">📋 Copier le message</button>
+        ${d.kind === 'email' || d.kind === 'dm' ? '<button type="button" data-action="variant">🔄 Autre version</button>' : ''}
+        ${mailto ? `<a class="button" href="${esc(mailto)}">✉️ Ouvrir dans ma messagerie</a>` : ''}
+        ${d.kind === 'dm' && social ? `<a class="button" href="${esc(social)}" target="_blank" rel="noopener noreferrer">Ouvrir la page</a>` : ''}
+        <button type="button" data-action="sent">✔️ Marquer « contacté »</button>
+      </div>
+      <p class="hint">${d.kind === 'email' || d.kind === 'dm' ? 'Ajoutez une phrase à vous (ce que vous avez aimé chez eux) : c’est ce qui fait répondre.' : 'Un script, pas un texte à lire mot pour mot : restez naturel.'}</p>
+    </div>`;
+  }
+
+  async function copy(text, button) {
+    const label = button.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Older browsers / no permission: fall back to a hidden textarea.
+      const t = Object.assign(document.createElement('textarea'), { value: text });
+      document.body.append(t); t.select(); document.execCommand('copy'); t.remove();
     }
-    lines.push('');
-    if (demo) lines.push(`Voici un exemple de site que j'ai réalisé : ${demo}`, '');
-    else lines.push(`Voici un exemple que j'ai réalisé pour un artisan, pour vous donner une idée : ${DEFAULT_DEMO}`, '');
-    lines.push(
-      "Si ça vous intéresse, je peux vous préparer une maquette gratuite de votre site, sans engagement. Je peux aussi vous appeler quelques minutes quand ça vous arrange.",
-      '',
-      'Bonne journée,',
-      settings.name || '[votre nom]',
-      ...[settings.phone, settings.page].filter(Boolean),
-      '',
-      '—',
-      "J'ai trouvé votre adresse e-mail sur OpenStreetMap, une carte collaborative publique. Si vous ne souhaitez plus recevoir de message de ma part, répondez simplement « stop ».",
-    );
-    return { subject: `Un site internet pour ${l.name} ?`, body: lines.join('\n') };
+    button.textContent = '✔️ Copié';
+    setTimeout(() => (button.textContent = label), 1500);
   }
 
-  function openComposer(l) {
+  $('#list').addEventListener('click', (e) => {
+    const l = leadOf(e.target);
     if (!l) return;
-    current = l;
-    const { subject, body } = draft(l);
-    $('#composer-title').textContent = `Écrire à ${l.name}`;
-    $('#composer-to').textContent = `À : ${l.emails.join(', ')}`;
-    $('#mail-subject').value = subject;
-    $('#mail-body').value = body;
-    updateMailLink();
-    $('#composer').showModal();
-  }
-  function updateMailLink() {
-    if (!current) return;
-    $('#mail-open').href = `mailto:${current.emails[0]}?subject=${encodeURIComponent($('#mail-subject').value)}&body=${encodeURIComponent($('#mail-body').value)}`;
-  }
-  $('#mail-subject').addEventListener('input', updateMailLink);
-  $('#mail-body').addEventListener('input', updateMailLink);
-  $('#mail-copy').addEventListener('click', async (e) => {
-    try { await navigator.clipboard.writeText($('#mail-body').value); e.target.textContent = '✔️ Copié'; }
-    catch { $('#mail-body').select(); }
-    setTimeout(() => (e.target.textContent = '📋 Copier le message'), 1500);
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    const copyWhat = e.target.closest('[data-copy]')?.dataset.copy;
+    if (action === 'draft') {
+      if (drafts.has(l.id)) drafts.delete(l.id);
+      else drafts.set(l.id, freshDraft(l, Drafts.kindsFor(l)[0], 0));
+      render();
+    } else if (action === 'kind') {
+      drafts.set(l.id, freshDraft(l, e.target.closest('[data-kind]').dataset.kind, 0));
+      render();
+    } else if (action === 'variant') {
+      const d = drafts.get(l.id);
+      drafts.set(l.id, freshDraft(l, d.kind, d.variant + 1));
+      render();
+    } else if (action === 'sent') {
+      setMark(l.id, { status: 'contacte' });
+      drafts.delete(l.id);
+      render();
+    } else if (copyWhat) {
+      const d = drafts.get(l.id);
+      copy(copyWhat === 'to' ? l.emails[0] : d[copyWhat], e.target.closest('[data-copy]'));
+    }
   });
-  $('#mail-done').addEventListener('click', () => {
-    if (current) setMark(current.id, { status: 'contacte' });
-    $('#composer').close();
-    render();
+  // Keep edits when the list re-renders.
+  $('#list').addEventListener('input', (e) => {
+    const field = e.target.dataset.draft;
+    const l = field && leadOf(e.target);
+    if (l && drafts.has(l.id)) drafts.get(l.id)[field] = e.target.value;
   });
 
   // ---------- settings & rules ----------
@@ -423,5 +435,5 @@
   });
 
   // Exposed for testing in the console only.
-  window.__prospects = { draft, normalize, buildQuery, deTown, aTown, filtered: () => filtered() };
+  window.__prospects = { normalize, buildQuery, drafts, filtered: () => filtered() };
 })();

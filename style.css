@@ -100,3 +100,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .demos .field { margin-bottom: 0.5rem; }
 .rules { padding-left: 1.2rem; display: grid; gap: 0.6rem; margin: 0; }
 .foot { margin-top: 2.5rem; color: var(--muted); font-size: 0.85rem; text-align: center; }
+
+/* Inline message generator */
+.draft { grid-column: 1 / -1; background: #fafaf7; border: 1px solid var(--line); border-radius: 10px; padding: 0.8rem; display: grid; gap: 0.6rem; }
+.draft-tabs { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.draft-tabs button { padding: 0.3rem 0.8rem; font-size: 0.88rem; }
+.draft-tabs button[aria-selected='true'] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.draft-row { display: grid; grid-template-columns: 3.5rem 1fr auto; gap: 0.5rem; align-items: center; }
+.draft-row span { font-weight: 600; font-size: 0.88rem; color: var(--muted); }
+.draft-row code { font: 0.95rem ui-monospace, monospace; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 0.45rem 0.6rem; overflow-wrap: anywhere; }
+.draft-row button, .draft-actions button, .draft-actions .button { padding: 0.4rem 0.85rem; font-size: 0.88rem; }
+.draft textarea { background: #fff; font-size: 0.93rem; }
+.draft-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.draft .hint { margin: 0; }

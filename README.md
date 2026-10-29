@@ -20,7 +20,13 @@ python3 -m http.server 4323 --directory prospects
 2. One [Overpass API](https://overpass-api.de) query fetches named shops, crafts, restaurants, etc. in that area.
 3. Businesses with a `website` tag and chains (`brand` / `brand:wikidata`) are filtered out. The rest are sorted by how reachable they are: email first, then Facebook or Instagram, then phone.
 4. **Vérifier** opens a Google search, because a missing tag in OpenStreetMap doesn't prove the business has no site.
-5. **Écrire** opens a per-sector email draft. It includes the source of the address and how to opt out. You personalise it and send it from your own mailbox.
+5. **✍️ Générer** opens a ready-to-paste message right under the business, with copy buttons. The options depend on what the business has published:
+   - email (with subject and address);
+   - a short Facebook / Instagram message;
+   - a phone script;
+   - a walk-in script, for shopfronts only.
+
+   The wording varies per business, and **🔄 Autre version** gives another. Emails always state the source of the address and how to opt out. Nothing is sent automatically: you paste the message into your own mailbox and send it.
 6. Statuses and notes are saved in the browser (`localStorage`). CSV export uses semicolons and a BOM for French Excel.
 
 Test run, Angers, 2 km, 29 Oct 2026:
