@@ -68,12 +68,6 @@
       'Est-ce que ce serait utile pour vous ? Si oui, je peux vous montrer une maquette gratuite, sans engagement, et répondre à vos questions par téléphone.',
     ], seed, 6);
 
-    // The law requires a simple way to refuse further messages (CPCE art. L34-5): one plain sentence.
-    const optOut = pick([
-      'Et si ce n\u2019est pas pour vous, dites-le-moi simplement : je ne vous écrirai plus.',
-      'Si ça ne vous intéresse pas, un simple « non merci » suffit, je ne vous recontacterai pas.',
-    ], seed, 9);
-
     const closing = pick(['Bonne journée,', 'Belle journée,', 'Merci de m’avoir lu, et bonne journée,'], seed, 7);
 
     const body = [
@@ -81,7 +75,7 @@
       intro, '',
       `${value} ${presence}`, '',
       example, '',
-      offer, optOut, '',
+      offer, '',
       closing,
       ...c.signature,
     ].join('\n');
