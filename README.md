@@ -1,5 +1,7 @@
 # Prospects: local businesses without a website
 
+**Open the tool:** https://sacha9214.github.io/prospects/
+
 A small browser tool that lists independent French businesses around a town that have **no website listed in OpenStreetMap**, grouped by sector, with their public contact details. It helps you write **one personal email at a time**, and tracks who you've contacted.
 
 The interface is in French. There's no account, no build step and no server of its own.
