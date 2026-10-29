@@ -37,9 +37,9 @@
     ], seed, 1);
 
     const intro = pick([
-      `Je m'appelle ${c.me}, je crée des sites internet pour les entreprises locales${c.area}. En parcourant ${c.sector.scan} ${deTown(c.city)}, j'ai vu ${queName(c.name)} n'avait pas encore de site.`,
-      `Je suis ${c.me}, je fais des sites internet pour les commerçants et les artisans${c.area}. En cherchant ${c.sector.scan} ${deTown(c.city)} en ligne, j'ai remarqué ${queName(c.name)} n'avait pas encore de site internet.`,
-      `Je m'appelle ${c.me} et je crée des sites internet pour les entreprises locales${c.area}. Je me permets de vous écrire car ${c.name} n'a pas encore de site internet.`,
+      `Je m'appelle ${c.me}, je crée des sites internet pour les entreprises locales${c.area}. En parcourant ${c.sector.scan} ${deTown(c.city)} sur la carte OpenStreetMap, j'ai vu ${queName(c.name)} n'avait pas encore de site.`,
+      `Je suis ${c.me}, je fais des sites internet pour les commerçants et les artisans${c.area}. En regardant ${c.sector.scan} ${deTown(c.city)} sur OpenStreetMap, une carte en ligne, j'ai remarqué ${queName(c.name)} n'avait pas encore de site internet.`,
+      `Je m'appelle ${c.me} et je crée des sites internet pour les entreprises locales${c.area}. J'ai trouvé votre adresse sur OpenStreetMap, et je me permets de vous écrire car ${c.name} n'a pas encore de site internet.`,
     ], seed, 2);
 
     const value = pick([
@@ -68,6 +68,12 @@
       'Est-ce que ce serait utile pour vous ? Si oui, je peux vous montrer une maquette gratuite, sans engagement, et répondre à vos questions par téléphone.',
     ], seed, 6);
 
+    // The law requires a simple way to refuse further messages (CPCE art. L34-5): one plain sentence.
+    const optOut = pick([
+      'Et si ce n\u2019est pas pour vous, dites-le-moi simplement : je ne vous écrirai plus.',
+      'Si ça ne vous intéresse pas, un simple « non merci » suffit, je ne vous recontacterai pas.',
+    ], seed, 9);
+
     const closing = pick(['Bonne journée,', 'Belle journée,', 'Merci de m’avoir lu, et bonne journée,'], seed, 7);
 
     const body = [
@@ -75,11 +81,9 @@
       intro, '',
       `${value} ${presence}`, '',
       example, '',
-      offer, '',
+      offer, optOut, '',
       closing,
-      ...c.signature, '',
-      '—',
-      "J'ai trouvé votre adresse e-mail sur OpenStreetMap, une carte collaborative publique. Si vous ne souhaitez plus recevoir de message de ma part, répondez simplement « stop ».",
+      ...c.signature,
     ].join('\n');
     return { subject, body };
   }
