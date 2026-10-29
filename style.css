@@ -79,6 +79,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .pill { font-size: 0.85rem; border-radius: 999px; padding: 0.2rem 0.65rem; background: #f0f0ea; color: var(--ink); text-decoration: none; }
 .pill.email { background: var(--ok-soft); color: var(--ok); font-weight: 600; }
 .pill.social { background: var(--accent-soft); }
+.pill.site { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
 .lead-side { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; }
 .lead-side select { width: auto; padding: 0.35rem 0.5rem; font-size: 0.88rem; }
 .lead-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }

@@ -151,6 +151,8 @@
   const split = (v) => String(v ?? '').split(/[;,]\s*/).map((s) => s.trim()).filter(Boolean);
   const pickAll = (t, keys) => [...new Set(keys.flatMap((k) => split(t[k])))];
   const EMAIL = /^[^\s@<>"]+@[^\s@<>"]+\.[a-z]{2,}$/i;
+  // Free mailbox providers. Any other email domain usually means the business owns a website there.
+  const WEBMAIL = /^(gmail|googlemail|hotmail|outlook|live|msn|yahoo|ymail|icloud|me|mac|aol|gmx|protonmail|proton|orange|wanadoo|free|sfr|neuf|club-internet|bbox|laposte|numericable|noos|cegetel|aliceadsl|libertysurf|tiscali|voila|9online|mailo|netcourrier)\./i;
   const socialUrl = (v, base) => {
     if (!v) return '';
     const url = /^https?:\/\//i.test(v) ? v : `${base}${v.replace(/^@/, '')}`;
@@ -164,6 +166,7 @@
     if (!sector || !wanted.includes(sector.id)) return null;
     const kind = t.shop || t.craft || t.amenity || t.healthcare || t.office || t.leisure || '';
     const emails = pickAll(t, ['email', 'contact:email']).filter((e) => EMAIL.test(e));
+    const likelySite = emails.map((e) => e.split('@')[1].toLowerCase()).find((d) => !WEBMAIL.test(d)) || '';
     const phones = pickAll(t, ['phone', 'contact:phone', 'contact:mobile', 'mobile']);
     const facebook = socialUrl(t['contact:facebook'] || t.facebook, 'https://www.facebook.com/');
     const instagram = socialUrl(t['contact:instagram'] || t.instagram, 'https://www.instagram.com/');
@@ -175,7 +178,9 @@
       street, postcode: t['addr:postcode'] || '', city, emails, phones, facebook, instagram,
       chain: !!(t.brand || t['brand:wikidata'] || t['operator:wikidata']),
       hours: t.opening_hours || '',
-      score: (emails.length ? 4 : 0) + (facebook || instagram ? 2 : 0) + (phones.length ? 1 : 0) + (street ? 0.5 : 0),
+      likelySite,
+      // A business emailing from its own domain very probably has a site there: push it down.
+      score: (emails.length ? 4 : 0) + (facebook || instagram ? 2 : 0) + (phones.length ? 1 : 0) + (street ? 0.5 : 0) - (likelySite ? 6 : 0),
       osm: `https://www.openstreetmap.org/${id}`,
     };
   }
@@ -266,6 +271,7 @@
     const address = [l.street, [l.postcode, l.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
     const google = `https://www.google.com/search?q=${encodeURIComponent(`"${l.name}" ${l.city}`)}`;
     const contacts = [
+      l.likelySite && `<a class="pill site" href="https://${esc(l.likelySite)}" target="_blank" rel="noopener noreferrer" title="Son e-mail utilise ce domaine : il a sûrement un site">🌐 Site probable : ${esc(l.likelySite)}</a>`,
       ...l.emails.map((e) => `<span class="pill email">✉️ ${esc(e)}</span>`),
       ...l.phones.map((p) => `<a class="pill" href="tel:${esc(p.replace(/[^\d+]/g, ''))}">📞 ${esc(p)}</a>`),
       l.facebook && `<a class="pill social" href="${esc(l.facebook)}" target="_blank" rel="noopener noreferrer">Facebook</a>`,
