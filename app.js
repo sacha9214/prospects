@@ -322,7 +322,6 @@
     const kinds = Drafts.kindsFor(l);
     const social = l.facebook || l.instagram;
     const rows = Math.min(18, d.body.split('\n').length + 2);
-    const mailto = d.kind === 'email' ? `mailto:${l.emails[0]}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(d.body)}` : '';
     return `<div class="draft">
       <div class="draft-tabs" role="tablist">${Drafts.KINDS.filter(([k]) => kinds.includes(k)).map(([k, label]) =>
         `<button type="button" role="tab" data-action="kind" data-kind="${k}" aria-selected="${k === d.kind}">${label}</button>`).join('')}</div>
@@ -331,14 +330,22 @@
         <div class="draft-row"><span>Objet</span><input type="text" data-draft="subject" value="${esc(d.subject)}" /><button type="button" data-copy="subject">📋 Copier</button></div>` : ''}
       <textarea data-draft="body" rows="${rows}" aria-label="Message">${esc(d.body)}</textarea>
       <div class="draft-actions">
-        <button type="button" class="primary" data-copy="body">📋 Copier le message</button>
+        ${d.kind === 'email' ? '<button type="button" class="primary" data-action="gmail">📨 Envoyer avec Gmail</button>' : ''}
+        <button type="button" class="${d.kind === 'email' ? '' : 'primary'}" data-copy="body">📋 Copier le message</button>
         ${d.kind === 'email' || d.kind === 'dm' ? '<button type="button" data-action="variant">🔄 Autre version</button>' : ''}
-        ${mailto ? `<a class="button" href="${esc(mailto)}">✉️ Ouvrir dans ma messagerie</a>` : ''}
+        ${d.kind === 'email' ? '<button type="button" data-action="mailto">✉️ Autre messagerie</button>' : ''}
         ${d.kind === 'dm' && social ? `<a class="button" href="${esc(social)}" target="_blank" rel="noopener noreferrer">Ouvrir la page</a>` : ''}
         <button type="button" data-action="sent">✔️ Marquer « contacté »</button>
       </div>
       <p class="hint">${d.kind === 'email' || d.kind === 'dm' ? 'Ajoutez une phrase à vous (ce que vous avez aimé chez eux) : c’est ce qui fait répondre.' : 'Un script, pas un texte à lire mot pour mot : restez naturel.'}</p>
     </div>`;
+  }
+
+  // Gmail's own "new message" page, pre-filled. Nothing is sent until you press Send in Gmail.
+  function gmailComposeUrl(to, subject, body) {
+    const params = new URLSearchParams({ view: 'cm', fs: '1', to, su: subject, body });
+    if (settings.gmail) params.set('authuser', settings.gmail); // pick the right account if several are signed in
+    return `https://mail.google.com/mail/?${params}`;
   }
 
   async function copy(text, button) {
@@ -370,6 +377,12 @@
       const d = drafts.get(l.id);
       drafts.set(l.id, freshDraft(l, d.kind, d.variant + 1));
       render();
+    } else if (action === 'gmail' || action === 'mailto') {
+      // Built now, not at render time, so your last edits are included.
+      const d = drafts.get(l.id);
+      const url = action === 'gmail' ? gmailComposeUrl(l.emails[0], d.subject, d.body) : `mailto:${l.emails[0]}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(d.body)}`;
+      if (action === 'gmail') window.open(url, '_blank', 'noopener');
+      else location.href = url;
     } else if (action === 'sent') {
       setMark(l.id, { status: 'contacte' });
       drafts.delete(l.id);
@@ -394,7 +407,7 @@
   }));
   function fillSettings() {
     const f = $('#settings-form');
-    ['name', 'phone', 'page', 'area'].forEach((k) => (f.elements[k].value = settings[k] || ''));
+    ['name', 'phone', 'page', 'area', 'gmail'].forEach((k) => (f.elements[k].value = settings[k] || ''));
     $('#demo-fields').innerHTML = SECTORS.map((s) =>
       `<label class="field"><span>${s.icon} ${esc(s.label)}</span><input type="url" data-demo="${s.id}" placeholder="Par défaut : le site artisan" value="${esc(settings.demos?.[s.id] || '')}" /></label>`).join('');
   }
@@ -403,7 +416,7 @@
     const f = e.target;
     const demos = {};
     f.querySelectorAll('[data-demo]').forEach((i) => { if (i.value.trim()) demos[i.dataset.demo] = i.value.trim(); });
-    settings = { name: f.elements.name.value.trim(), phone: f.elements.phone.value.trim(), page: f.elements.page.value.trim(), area: f.elements.area.value.trim(), demos };
+    settings = { name: f.elements.name.value.trim(), phone: f.elements.phone.value.trim(), page: f.elements.page.value.trim(), area: f.elements.area.value.trim(), gmail: f.elements.gmail.value.trim(), demos };
     store.set('settings', settings);
   });
   $('#wipe').addEventListener('click', () => {

@@ -26,7 +26,7 @@ python3 -m http.server 4323 --directory prospects
    - a phone script;
    - a walk-in script, for shopfronts only.
 
-   The wording varies per business, and **🔄 Autre version** gives another. Emails always state the source of the address and how to opt out. Nothing is sent automatically: you paste the message into your own mailbox and send it.
+   The wording varies per business, and **🔄 Autre version** gives another. Emails always state the source of the address and how to opt out. Nothing is sent automatically. **📨 Envoyer avec Gmail** opens Gmail's compose window pre-filled (address, subject, message, your latest edits), and you press Send there. **✉️ Autre messagerie** does the same with your default mail app, and you can also simply copy-paste.
 6. Statuses and notes are saved in the browser (`localStorage`). CSV export uses semicolons and a BOM for French Excel.
 
 Test run, Angers, 2 km, 29 Oct 2026:
