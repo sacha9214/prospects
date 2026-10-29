@@ -3,7 +3,15 @@
 (() => {
   'use strict';
 
-  const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+  // Public OpenStreetMap servers. They are free and sometimes overloaded, so every attempt has a
+  // time limit, and the main server gets a second chance after the backup.
+  const MAIN = 'https://overpass-api.de/api/interpreter';
+  const BACKUP = 'https://overpass.private.coffee/api/interpreter';
+  const ATTEMPTS = [
+    { url: MAIN, timeout: 60000 },
+    { url: BACKUP, timeout: 30000, note: 'Serveur principal indisponible, essai d\u2019un serveur de secours…' },
+    { url: MAIN, timeout: 60000, wait: 5000, note: 'Nouvel essai sur le serveur principal…' },
+  ];
   const PAGE = 60;
   const STATUSES = [
     ['a-verifier', 'À vérifier'],
@@ -18,6 +26,10 @@
   const DEFAULT_DEMO = 'https://sacha9214.github.io/artisan-demo/';
 
   const $ = (sel) => document.querySelector(sel);
+  // French prepositions with town names: "de Tours", "d'Angers", "du Mans" / "à Tours", "au Mans".
+  const deTown = (c) => /^Le /.test(c) ? `du ${c.slice(3)}` : /^Les /.test(c) ? `des ${c.slice(4)}` : /^[aeiouyhâéèêîôû]/i.test(c) ? `d'${c}` : `de ${c}`;
+  const aTown = (c) => /^Le /.test(c) ? `au ${c.slice(3)}` : /^Les /.test(c) ? `aux ${c.slice(4)}` : `à ${c}`;
+  const queName = (n) => /^[aeiouyhâéèêîôû]/i.test(n) ? `qu'${n}` : `que ${n}`;
   // OSM data is user-contributed: escape everything before it touches innerHTML.
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -104,24 +116,33 @@
     return `[out:json][timeout:90][bbox:${bbox(center, radius)}];(${parts.map((p) => `${p};`).join('')});out tags center;`;
   }
 
-  async function overpass(query) {
+  async function overpass(query, onNote) {
     const cacheKey = `overpass:${query}`;
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) return JSON.parse(cached);
     let lastError;
-    for (const endpoint of OVERPASS) {
+    for (const attempt of ATTEMPTS) {
+      if (attempt.note) onNote?.(attempt.note);
+      if (attempt.wait) await new Promise((r) => setTimeout(r, attempt.wait));
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), attempt.timeout);
       try {
-        const res = await fetch(endpoint, {
+        const res = await fetch(attempt.url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
           body: `data=${encodeURIComponent(query)}`,
+          signal: ctrl.signal,
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        if (json.remark && /timed out|out of memory|rate/i.test(json.remark)) throw new Error(json.remark);
+        if (json.remark && /timed out|out of memory|rate/i.test(json.remark)) throw new Error('requête trop lourde');
         try { sessionStorage.setItem(cacheKey, JSON.stringify(json.elements)); } catch { /* quota: skip cache */ }
         return json.elements;
-      } catch (err) { lastError = err; }
+      } catch (err) {
+        lastError = err.name === 'AbortError' ? new Error('pas de réponse') : err;
+      } finally {
+        clearTimeout(timer);
+      }
     }
     throw lastError;
   }
@@ -177,8 +198,8 @@
       }
       btn.disabled = true;
       const radius = Number($('#radius').value);
-      setStatus(`Recherche autour de ${town.nom} (${radius / 1000} km)… jusqu'à une minute.`, 'loading');
-      const elements = await overpass(buildQuery(town, radius, wanted));
+      setStatus(`Recherche autour ${deTown(town.nom)} (${radius / 1000} km)… jusqu'à une minute.`, 'loading');
+      const elements = await overpass(buildQuery(town, radius, wanted), (note) => setStatus(note, 'loading'));
       const all = elements.filter((el) => el.tags?.name);
       leads = all.map((el) => normalize(el, town, wanted)).filter(Boolean);
       const indep = leads.filter((l) => !l.chain);
@@ -193,7 +214,7 @@
       render();
       $('#results').hidden = false;
     } catch (err) {
-      setStatus(`La recherche n'a pas abouti (${err.message}). Réessayez avec un rayon plus petit, ou dans une minute.`, 'error');
+      setStatus(`Les serveurs OpenStreetMap ne répondent pas pour le moment (${err.message}). Ils sont gratuits et parfois surchargés : réessayez dans quelques minutes, ou avec un rayon plus petit.`, 'error');
     } finally {
       btn.disabled = false;
     }
@@ -288,10 +309,6 @@
   });
 
   // ---------- composer ----------
-  // French prepositions with town names: "de Tours", "d'Angers", "du Mans" / "à Tours", "au Mans".
-  const deTown = (c) => /^Le /.test(c) ? `du ${c.slice(3)}` : /^Les /.test(c) ? `des ${c.slice(4)}` : /^[aeiouyhâéèêîôû]/i.test(c) ? `d'${c}` : `de ${c}`;
-  const aTown = (c) => /^Le /.test(c) ? `au ${c.slice(3)}` : /^Les /.test(c) ? `aux ${c.slice(4)}` : `à ${c}`;
-  const queName = (n) => /^[aeiouyhâéèêîôû]/i.test(n) ? `qu'${n}` : `que ${n}`;
   let current = null;
   function draft(l) {
     const sector = SECTORS.find((s) => s.id === l.sector);

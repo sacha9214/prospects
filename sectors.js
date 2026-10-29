@@ -89,4 +89,7 @@ window.TYPE_LABELS = {
   photographer: 'Photographe', caterer: 'Traiteur', dressmaker: 'Couturière', upholsterer: 'Tapissier', shoemaker: 'Cordonnier',
   watchmaker: 'Horloger', key_cutter: 'Clés minute', fitness_centre: 'Salle de sport', physiotherapist: 'Kinésithérapeute',
   psychotherapist: 'Psychothérapeute', doctor: 'Médecin', dentist: 'Dentiste', osteopath: 'Ostéopathe', alternative: 'Médecine douce',
+  electronics_repair: 'Réparation électronique', computer_repair: 'Réparation informatique', jeweller: 'Bijoutier', brewery: 'Brasserie artisanale',
+  winery: 'Domaine viticole', beekeeper: 'Apiculteur', bookbinder: 'Relieur', confectionery_craft: 'Confiseur', pottery: 'Potier', glass: 'Verrier',
+  printer: 'Imprimeur', sign_maker: 'Enseignes', tattoo_artist: 'Tatoueur', nail_salon: 'Onglerie', repair: 'Réparation', variety_store: 'Bazar',
 };
