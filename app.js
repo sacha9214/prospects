@@ -337,9 +337,13 @@
         ${d.kind === 'dm' && social ? `<a class="button" href="${esc(social)}" target="_blank" rel="noopener noreferrer">Ouvrir la page</a>` : ''}
         <button type="button" data-action="sent">✔️ Marquer « contacté »</button>
       </div>
+      ${(d.kind === 'email' || d.kind === 'dm') && signatureIncomplete() ? `<p class="sig-warn">⚠️ Signature incomplète : ajoutez votre <strong>nom complet</strong> et votre <strong>téléphone</strong> dans <button type="button" data-action="settings">⚙️ Mes infos</button>. Un message signé d'un vrai nom et d'un numéro inspire beaucoup plus confiance.</p>` : ''}
       <p class="hint">${d.kind === 'email' || d.kind === 'dm' ? 'Ajoutez une phrase à vous (ce que vous avez aimé chez eux) : c’est ce qui fait répondre.' : 'Un script, pas un texte à lire mot pour mot : restez naturel.'}</p>
     </div>`;
   }
+
+  // A first name alone, with no phone number, reads like spam.
+  const signatureIncomplete = () => !/\S\s+\S/.test(settings.name || '') || !settings.phone;
 
   // Gmail's own "new message" page, pre-filled. Nothing is sent until you press Send in Gmail.
   function gmailComposeUrl(to, subject, body) {
@@ -383,6 +387,9 @@
       const url = action === 'gmail' ? gmailComposeUrl(l.emails[0], d.subject, d.body) : `mailto:${l.emails[0]}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(d.body)}`;
       if (action === 'gmail') window.open(url, '_blank', 'noopener');
       else location.href = url;
+    } else if (action === 'settings') {
+      fillSettings();
+      $('#settings').showModal();
     } else if (action === 'sent') {
       setMark(l.id, { status: 'contacte' });
       drafts.delete(l.id);
@@ -418,6 +425,11 @@
     f.querySelectorAll('[data-demo]').forEach((i) => { if (i.value.trim()) demos[i.dataset.demo] = i.value.trim(); });
     settings = { name: f.elements.name.value.trim(), phone: f.elements.phone.value.trim(), page: f.elements.page.value.trim(), area: f.elements.area.value.trim(), gmail: f.elements.gmail.value.trim(), demos };
     store.set('settings', settings);
+    drafts.forEach((d, id) => {
+      const l = leads.find((x) => x.id === id);
+      if (l) drafts.set(id, freshDraft(l, d.kind, d.variant));
+    });
+    if (leads.length) render();
   });
   $('#wipe').addEventListener('click', () => {
     if (!confirm('Effacer tous les statuts, notes et réglages enregistrés dans ce navigateur ?')) return;

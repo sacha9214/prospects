@@ -28,54 +28,50 @@
     };
   }
 
+  // Short on purpose (~80 words): who I am, why them, one example, one yes/no question.
   function email(c, seed) {
     const subject = pick([
-      `Un site internet pour ${c.name} ?`,
-      `${c.name} sur Google`,
-      `Une idée pour ${c.name}`,
-      `${c.name} : une idée de site internet`,
+      `Site internet pour ${c.name}`,
+      `Question pour ${c.name}`,
+      `${c.name} : une petite idée`,
     ], seed, 1);
 
     const intro = pick([
-      `Je m'appelle ${c.me}, je crée des sites internet pour les entreprises locales${c.area}. En parcourant ${c.sector.scan} ${deTown(c.city)} sur la carte OpenStreetMap, j'ai vu ${queName(c.name)} n'avait pas encore de site.`,
-      `Je suis ${c.me}, je fais des sites internet pour les commerçants et les artisans${c.area}. En regardant ${c.sector.scan} ${deTown(c.city)} sur OpenStreetMap, une carte en ligne, j'ai remarqué ${queName(c.name)} n'avait pas encore de site internet.`,
-      `Je m'appelle ${c.me} et je crée des sites internet pour les entreprises locales${c.area}. J'ai trouvé votre adresse sur OpenStreetMap, et je me permets de vous écrire car ${c.name} n'a pas encore de site internet.`,
+      `Je m'appelle ${c.me}, je crée des sites internet pour les entreprises locales${c.area}. En regardant ${c.sector.scan} ${deTown(c.city)} sur OpenStreetMap, j'ai vu ${queName(c.name)} n'avait pas encore de site.`,
+      `Je suis ${c.me}, je fais des sites internet pour les commerçants et artisans${c.area}. J'ai vu sur OpenStreetMap ${queName(c.name)} n'avait pas encore de site internet.`,
+      `Je m'appelle ${c.me} et je crée des sites internet${c.area}. En cherchant ${c.sector.scan} ${deTown(c.city)} sur OpenStreetMap, j'ai remarqué ${queName(c.name)} n'avait pas de site.`,
     ], seed, 2);
 
-    const value = pick([
-      `Un site simple aide vos clients à découvrir ${c.sector.pitch}.`,
-      `Un site clair aiderait vos clients à découvrir ${c.sector.pitch}.`,
-      `Un site bien fait aide les gens qui vous cherchent à découvrir ${c.sector.pitch}.`,
-    ], seed, 3);
-
-    const presence = c.net
+    // One concrete benefit; a nod to their Facebook/Instagram page when they have one.
+    const value = c.net
       ? pick([
-        `Vous êtes déjà sur ${c.net} : un site vient en complément, et il vous rend plus facile à trouver sur Google quand quelqu'un cherche votre métier ${aTown(c.city)}.`,
-        `J'ai vu votre page ${c.net} : un site la complète bien, et vous rend plus facile à trouver sur Google ${aTown(c.city)}.`,
-      ], seed, 4)
+        `Votre page ${c.net} est déjà là : un site la complète, et aide vos clients à découvrir ${c.sector.pitch}.`,
+        `Un site, en plus de votre page ${c.net}, aiderait vos clients à découvrir ${c.sector.pitch}.`,
+      ], seed, 3)
       : pick([
-        'Aujourd’hui, beaucoup de clients regardent sur internet avant de se déplacer ou d’appeler.',
-        'Beaucoup de clients cherchent sur leur téléphone avant de choisir à qui s’adresser.',
-      ], seed, 4);
+        `Un site simple aiderait vos clients à découvrir ${c.sector.pitch}.`,
+        `Un site clair aide les gens qui vous cherchent à découvrir ${c.sector.pitch}.`,
+      ], seed, 3);
 
-    const example = c.demoIsOwnSector
-      ? pick([`Voici un exemple de site que j'ai réalisé : ${c.demo}`, `Pour vous donner une idée, voici un site que j'ai réalisé : ${c.demo}`], seed, 5)
-      : pick([`Voici un exemple que j'ai réalisé pour un artisan, pour vous donner une idée : ${c.demo}`, `Pour vous donner une idée, voici un site que j'ai fait pour un artisan : ${c.demo}`], seed, 5);
+    const example = pick([
+      `Un exemple de mon travail : ${c.demo}`,
+      `Pour vous faire une idée, un site que j'ai réalisé : ${c.demo}`,
+    ], seed, 5);
 
-    const offer = pick([
-      'Si ça vous intéresse, je peux vous préparer une maquette gratuite de votre site, sans engagement. Je peux aussi vous appeler quelques minutes quand ça vous arrange.',
-      `Si l'idée vous plaît, je vous prépare gratuitement une première version pour ${c.sector.place}, sans engagement : vous verrez à quoi ça ressemblerait avant de décider quoi que ce soit.`,
-      'Est-ce que ce serait utile pour vous ? Si oui, je peux vous montrer une maquette gratuite, sans engagement, et répondre à vos questions par téléphone.',
+    // A question that can be answered with "oui" in two seconds.
+    const ask = pick([
+      `Voulez-vous que je vous prépare une maquette gratuite pour ${c.sector.place}, sans engagement ?`,
+      `Je peux vous préparer une maquette gratuite pour ${c.sector.place}, sans engagement. Ça vous dirait ?`,
+      `Seriez-vous d'accord pour que je vous montre une maquette gratuite, sans engagement ?`,
     ], seed, 6);
 
-    const closing = pick(['Bonne journée,', 'Belle journée,', 'Merci de m’avoir lu, et bonne journée,'], seed, 7);
+    const closing = pick(['Bonne journée,', 'Belle journée,'], seed, 7);
 
     const body = [
       'Bonjour,', '',
       intro, '',
-      `${value} ${presence}`, '',
-      example, '',
-      offer, '',
+      value, example, '',
+      ask, '',
       closing,
       ...c.signature,
     ].join('\n');
