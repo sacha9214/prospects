@@ -159,6 +159,7 @@
   function normalize(el, searchTown, wanted) {
     const t = el.tags || {};
     if (t.website || t['contact:website'] || t.url) return null; // has a website: not a lead
+    if (t.shop === 'hairdresser' || t.craft === 'hairdresser' || t.shop === 'hairdresser_supply') return null; // hairdressers use Planity
     const sector = SECTORS.find((s) => s.match(t));
     if (!sector || !wanted.includes(sector.id)) return null;
     const kind = t.shop || t.craft || t.amenity || t.healthcare || t.office || t.leisure || '';
