@@ -3,10 +3,11 @@
 
 const BUILDING_CRAFTS = 'plumber|electrician|painter|carpenter|roofer|tiler|plasterer|builder|hvac|glaziery|locksmith|stonemason|insulation|floorer|joiner|metal_construction|window_construction|gardener|landscaper|parquet_layer|scaffolder|heating_engineer|chimney_sweeper|blacksmith|cabinet_maker|kitchen_fitter';
 const FOOD_SHOPS = 'bakery|pastry|butcher|cheese|deli|greengrocer|confectionery|chocolate|wine|alcohol|seafood|coffee|tea|farm|spices|convenience|beverages|health_food|organic';
-// No hairdressers or barbers: nearly all of them already use Planity (Sacha's call, 2026-10-30).
-const BEAUTY_SHOPS = 'beauty|cosmetics|massage|tattoo|perfumery';
+// No hairdressers, barbers, beauty institutes or nail salons: they mostly book through Planity already
+// (Sacha's call, 2026-10-30/31). Perfume and cosmetics shops are plain retail, so they live in Commerces.
+const BEAUTY_SHOPS = 'massage|tattoo';
 const AUTO_SHOPS = 'car_repair|tyres|car|motorcycle|car_parts|motorcycle_repair|caravan';
-const RETAIL_SHOPS = 'clothes|shoes|florist|gift|books|jewelry|optician|toys|furniture|interior_decoration|bicycle|sports|pet|garden_centre|second_hand|antiques|music|musical_instrument|art|craft|stationery|hardware|kitchen|bed|fabric|watches|bag|boutique|computer|mobile_phone|electronics|photo|variety_store|newsagent|tobacco|games|video_games|outdoor|fishing|lighting|frame|houseware|leather|baby_goods|e-cigarette|herbalist';
+const RETAIL_SHOPS = 'perfumery|cosmetics|clothes|shoes|florist|gift|books|jewelry|optician|toys|furniture|interior_decoration|bicycle|sports|pet|garden_centre|second_hand|antiques|music|musical_instrument|art|craft|stationery|hardware|kitchen|bed|fabric|watches|bag|boutique|computer|mobile_phone|electronics|photo|variety_store|newsagent|tobacco|games|video_games|outdoor|fishing|lighting|frame|houseware|leather|baby_goods|e-cigarette|herbalist';
 const SERVICE_SHOPS = 'dry_cleaning|laundry|tailor|travel_agency|copyshop|pet_grooming|shoe_repair|locksmith|funeral_directors|rental|storage_rental|repair';
 
 const re = (alts) => new RegExp(`^(${alts})$`);
@@ -25,7 +26,7 @@ window.SECTORS = [
     pitch: 'vos produits, vos horaires et l’accès, et à passer commande',
   },
   {
-    id: 'beaute', place: 'votre salon', scan: 'les instituts de beauté et les salons', label: 'Beauté & tatouage', icon: '💅', default: true,
+    id: 'beaute', place: 'votre salon', scan: 'les salons de tatouage et de massage', label: 'Tatouage & massage', icon: '💆', default: true,
     query: [`nwr["shop"~"^(${BEAUTY_SHOPS})$"]["name"]`],
     match: (t) => re(BEAUTY_SHOPS).test(t.shop),
     pitch: 'vos prestations et vos tarifs, et à prendre rendez-vous en ligne',
